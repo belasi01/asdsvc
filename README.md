@@ -1,2 +1,2 @@
-# asd
-R package for ASD
+# asdsvc
+R package for ASD and SVC data processing
