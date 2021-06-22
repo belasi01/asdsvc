@@ -1,0 +1,18 @@
+.onLoad <- function(lib, pkg) {
+  Sys.setenv(TZ = "GMT")
+  Sys.setenv(R_ASD_DATA_DIR=paste(lib, pkg, "data", sep="/"))
+  message("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")
+  message("TO BEGIN A PROCESSING, \n")
+  message("1. Move to working directory (setwd(PATH)),\n")
+  message("2. Create a file directories.for.ASD.dat and\n  ")
+  message("   put in it the names of the directories where data\n")
+  message("   files can be found (one by line).\n")
+  message("3. Create an ASCII file named cast.info.dat, which shall include \n")
+  message("   the ancillary data needed for the data processing, i.e.:  \n")
+  message("   lon, lat, basename,	ID,	\n")
+  message("   Lpanel_start,	Lpanel_end,	Lsky_start,	Lsky_end,	Ltot_start,	Ltot_end,\n")
+  message("   ThetaV,	Dphi,	Windspeed, Wind.units, quantile.prob,	rhow.Method\n")
+  message("   Read the User Guide for more details.\n")
+  message("4. Type ASD.go() in the working directory to launch the processing. \n")
+  message("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")
+}
