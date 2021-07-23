@@ -74,7 +74,7 @@ read.SVC <- function(filen){
       HH=as.numeric(str_sub(z,1,2))
       MM=as.numeric(str_sub(z,3,4))
       SS=as.numeric(str_sub(z,5,8))
-      GPSt = hms(paste(HH,MM,SS, sep=":"))
+      GPSt = paste(HH,MM,SS, sep=":")
     }
     if (length(line) > 1) {
       if (line[2] == "method=") {
@@ -127,6 +127,11 @@ read.SVC <- function(filen){
   print(paste("Number of header lines:", nrec))
   close(id)
   df<-fread(file = filen, skip = nrec)
+  
+  if (is.na(DateTime.Target)) {
+    print("************No GPS available for TARGET***********************")
+  }
+  
   
   return(list(ScanMethod = ScanMethod,
               Reference  = list(IntTime=IntTime.Ref,
