@@ -1,0 +1,25 @@
+##################################################
+#  SVC.sky      is the file name for sky reflectance
+# SVC.surface   is the file name for surface reflectance
+#  ID           is acharacter string corresponding to the Station or Transect ID
+#  Replicate    is a capital Letter for the replicate (A, B, C, D)
+#  Dphi         is the diffirence in azimuth between sun and sensor
+#  Windspeed    is the wind speed
+#  Wind.units   is the units of the wind speed ("Kts", "Km.h" or "m.s")
+# rho.panel   is the reflectance of the reference panel (spectralon). It is normally provided by Labsphere.
+#  rhow.Method is an integer (0 to 4) indicating the best method for the specular sky reflectance removal (see User Guide):
+#      0 is for Mobley's LUT for rho_sky with no additional correction.
+#      1 is for Mobley's LUT for rho_sky, but with NIR correction based on black pixel assumption.
+#      2 is for Mobley rho_sky with NIR correction based on similarity spectrum using 720 and 780 nm.
+#      3 is for Mobley rho_sky with NIR correction based on similarity spectrum using 780 and 870 nm.
+#      4 is for rho_sky estimated using the black pixel assumption in the NIR.
+#      5 is for rho_sky estimated using the black pixel assumption in the UV (350 nm).
+#      6 is for rho_sky estimated using the black pixel assumption in both UV and NIR (spectrally dependent).
+#      7 is for rho_sky estimated using COPS Rrs measurement at 2 valid wavelengths (spectrally dependent).
+#      8 is for rho_sky estimated using Kutzer et al. 2013 method of power fitting at 2 valid wavelengths (UV-NIR) (spectrally dependent).
+#     9 is for rho_sky estimated using Jiang et al. 2020 method 
+#       999 is for BAD data.
+#
+##################################################
+SVC.sky SVC.surface	ID Replicate	Dphi	Windspeed Wind.units rho.panel rhow.Method
+YYMMDD_HHMM_Rxxx_Tyyy.sig YYMMDD_HHMM_Rxxx_Tyyy.sig StationID A 90 0 Kts  0.985 0
