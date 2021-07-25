@@ -6,6 +6,7 @@
 #' @param Lsky is a list returned by the function \code{\link{read.SVC}}
 #' containing the radiances of the sky (Lsky)
 #' @param StationID is the station ID
+#' @param Replicate is a letter indicating the replicate (A, B, C, etc)
 #' @param Dphi is the sensor azimuth angle relative to the sun
 #' @param Windspeed is the wind speed in m/s.
 #'
@@ -19,10 +20,11 @@
 
 
 merge.SVC.radiances.for.rhow <- function(Ltot,
-                                              Lsky,
-                                              StationID="StationX",
-                                              Dphi,
-                                              Windspeed) {
+                                         Lsky,
+                                         StationID="StationX",
+                                         Replicate="A",
+                                         Dphi,
+                                         Windspeed) {
 
   # calculate the sun zenith angle from time and position.
   # Derive data from above information
@@ -55,6 +57,7 @@ merge.SVC.radiances.for.rhow <- function(Ltot,
   ThetaS <- sunpos[1]
   PhiS <-sunpos[2]
   anc <- list(StationID=as.character(StationID),
+              Replicate=as.character(Replicate),
               lat=lat,
               lon=lon,
               DateTime=DateTime,

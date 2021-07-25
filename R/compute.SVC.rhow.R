@@ -78,18 +78,21 @@ compute.SVC.rhow <- function(raw.SVC,
   # } else {
   #   Lt.sd = apply(Lt, 1, sd)
   # }
+  Ed = pi*raw.SVC$Ltot$Reference$L/rho.panel 
   
   ######## Compute Sky reflectance and rho and apply a smoothing function
   if (VERBOSE) print("Compute Sky and Surface reflectance and apply a smoothing function")
   x = range(waves)
   
-  sky = raw.SVC$Lsky$reflectance
+  #sky = raw.SVC$Lsky$reflectance
+  sky = raw.SVC$Lsky$Target$L / Ed
   mod= loess(sky~waves, data=data.frame(waves=waves, sky=sky), span=20/(x[2]-x[1])) # 20 nm window
-  sky.smooth = predict(mod, Lsky$waves)
+  sky.smooth = predict(mod, waves)
   
-  sea = raw.SVC$Ltot$reflectance
+  #sea = raw.SVC$Ltot$reflectance
+  sea = raw.SVC$Ltot$Target$L / Ed
   mod= loess(sea~waves, data=data.frame(waves=waves, sea=sea), span=10/(x[2]-x[1])) # 10 nm window
-  sea.smooth = predict(mod, Ltot$waves)
+  sea.smooth = predict(mod, waves)
   
   ######### Get rho fresnel from MOBLEY LUT or use a constant rho of 0.0256 if cloudy
   if (sky.smooth[ix750] >= 0.05){
@@ -139,10 +142,10 @@ compute.SVC.rhow <- function(raw.SVC,
   
   #####
   ###### Method 6. Estimation of the rho.fresnel assuming BLACK Pixel assumption in both UV and NIR (spectrally dependent)
-  rho.sky.UV.NIR = spline(c(mean(Ltot$waves[ix350:ix380], na.rm = T),
-                            mean(Ltot$waves[ix890:ix900], na.rm = T)),
+  rho.sky.UV.NIR = spline(c(mean(waves[ix350:ix380], na.rm = T),
+                            mean(waves[ix890:ix900], na.rm = T)),
                           c(rho.sky.UV, rho.sky.NIR),
-                          xout = Ltot$waves)$y
+                          xout = waves)$y
   Rrs.UV.NIR = sea.smooth - (rho.sky.UV.NIR*sky.smooth)
   
   #####
@@ -197,7 +200,7 @@ compute.SVC.rhow <- function(raw.SVC,
         for (j in 1:nf) {
           
           load(paste(listfile[j], ".RData", sep=""))
-          waves = cops$LuZ.waves
+          waves.COPS = cops$LuZ.waves
           
           # extract Rrs
           if (select.file.exists) {
@@ -214,7 +217,7 @@ compute.SVC.rhow <- function(raw.SVC,
         cops.Rrs.m = apply(mRrs, 2, mean, na.rm=T)
       } else {
         load(paste(listfile, ".RData", sep=""))
-        waves = cops$LuZ.waves
+        waves.COPS = cops$LuZ.waves
         if (select.file.exists) {
           #cops.Rrs.m = eval(parse(text=paste0("cops$",Rrs_method,"[xw]")))
           cops.Rrs.m = eval(parse(text=paste0("cops$",Rrs_method)))
@@ -228,14 +231,14 @@ compute.SVC.rhow <- function(raw.SVC,
       ix.good.Rrs = which(cops.Rrs.m > 0)
       ix.waves.min.cops = min(ix.good.Rrs)
       ix.waves.max.cops = max(ix.good.Rrs)
-      waves.max = waves[ix.waves.max.cops]
-      waves.min = waves[ix.waves.min.cops]
+      waves.max = waves.COPS[ix.waves.max.cops]
+      waves.min = waves.COPS[ix.waves.min.cops]
       
       
-      ix.waves.min.SVC = which.min(abs(Ltot$waves - waves.min))
+      ix.waves.min.SVC = which.min(abs(waves - waves.min))
       if (ix.waves.min.SVC<6) ix.waves.min.SVC=6
       
-      ix.waves.max.SVC = which.min(abs(Ltot$waves - waves.max))
+      ix.waves.max.SVC = which.min(abs(waves - waves.max))
       
       # Estimate rho.shy at the two wavelenghts selected
       rho.sky.min  = ((mean(sea.smooth[(ix.waves.min.SVC-5):(ix.waves.min.SVC+5)],na.rm = T) - cops.Rrs.m[ix.waves.min.cops])
@@ -244,7 +247,7 @@ compute.SVC.rhow <- function(raw.SVC,
                       / mean(sky.smooth[(ix.waves.max.SVC-5):(ix.waves.max.SVC+5)], na.rm = T))
       
       rho.sky.COPS = spline(c(waves.min, waves.max), c(rho.sky.min, rho.sky.max),
-                            xout = Ltot$waves)$y
+                            xout = waves)$y
       
       Rrs.COPS = sea.smooth - (rho.sky.COPS*sky.smooth)
       
@@ -264,8 +267,8 @@ compute.SVC.rhow <- function(raw.SVC,
   UVdata <- sea.smooth[ix350:ix380]
   NIRdata <- sea.smooth[ix890:ix900]
   
-  UVwave <- Ltot$waves[ix350:ix380]
-  NIRwave <- Ltot$waves[ix890:ix900]
+  UVwave <- waves[ix350:ix380]
+  NIRwave <- waves[ix890:ix900]
   if (VERBOSE) print("Wavelength and data at UV and NIR binned")
   
   UV.NIR.data <- c(UVdata,NIRdata)
@@ -273,22 +276,24 @@ compute.SVC.rhow <- function(raw.SVC,
   Kutserdata <- data.frame(UV.NIR.wave, UV.NIR.data)
   names(Kutserdata) <- c("waves", "urhow")
   if (VERBOSE) print("Starting the NLS")
-  glint.fit <- nls(urhow ~ b*waves^z,start = list(b = 1, z = 0),data=Kutserdata)
   
+  try(glint.fit <- nls(urhow ~ b*waves^z,start = list(b = 1, z = 0),data=Kutserdata))
   
-  p <- coef(glint.fit)
-  Kutserestimate <- p[1]*(Ltot$waves)^p[2]
-  Rrs.Kutser <- sea.smooth - Kutserestimate
+  if (exists("glint.fit")) {
+    p <- coef(glint.fit)
+    Kutserestimate <- p[1]*(waves)^p[2]
+    Rrs.Kutser <- sea.smooth - Kutserestimate
+    if (VERBOSE) print("Kutser correction finished")
+    # TO BE REMOVED EVENTUALLY
+    #plot(Kutserdata$waves, Kutserdata$urhow)
+    #summary(glint.fit)
+    #plot(sea.smooth)
+    #lines(Kutserestimate)
+  } else {
+    print("******** NLS fit failed for Kutser method")
+    Rrs.Kutser <- NA
+  }
   
-  if (VERBOSE) print("Kutser correction finished")
-  
-  # TO BE REMOVED EVENTUALLY
-  plot(Kutserdata$waves, Kutserdata$urhow)
-  summary(glint.fit)
-  plot(sea.smooth)
-  lines(Kutserestimate)
-  #plot(sea.smooth - Kutserestimate)
-  #lines(rhow$rhow.COPS, col=2)
   
   
   #####
@@ -330,7 +335,7 @@ compute.SVC.rhow <- function(raw.SVC,
     #Lpanel=raw.SVC$Ltot$Reference$L,
     #Lt=raw.SVC$Ltot$Target$L,
     #Li=raw.SVC$Lsky$Target$L,
-    Ed.mean = raw.SVC$Ltot$Reference$L*pi,
+    Ed.mean = Ed,
     #Ed.sd = Ed.sd,
     Lt.mean = raw.SVC$Ltot$Target$L,
     #Lt.sd = Lt.sd,
