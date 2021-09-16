@@ -14,7 +14,7 @@
 #' reflectance measurements made a priori. It must be turn on only if COPS data have been
 #' processed and validated
 #'
-#'@return The function returns a list containing the rhow data.
+#'@return The function returns a list containing the water reflectance (rhow) data.
 #'The same list (rhow) is saved into a rhow.RData file in dirdat.
 #'
 #'@details The function first looks into the cast.info.dat file found
