@@ -15,7 +15,7 @@ read.SVC <- function(filen){
   id = file(filen, "r")
   line = strsplit(readLines(con=id, n =1), " ") # Reads the first header line
   nrec = 1
-  while (line != "data="){
+  while (any(line != "data=")){
     x = readLines(con=id, n =1)
     line = unlist(strsplit(x, " "))
     nrec <- nrec+1
