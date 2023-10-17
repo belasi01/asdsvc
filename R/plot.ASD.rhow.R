@@ -104,20 +104,20 @@ plot.ASD.rhow <- function (asd, PNG=FALSE, RADIANCES=FALSE) {
       p1 <- ggplot(data=Dfm, aes(x=wavelength, y=value, colour=rho_w)) + geom_line()
       p1 <- p1 + scale_x_continuous(limits = c(350, 950))
       p1 <- p1 + labs(x=expression(lambda), y=expression(paste(rho[w])), colour="Correction method")
-      p1 <- p1 + ggtitle(paste(asd$anc$StationID, asd$DateTime, "Lat:", asd$anc$lat, "Lon:", asd$anc$lon),
-                         subtitle = bquote(rho[Fresnel]^Mobley2015 == .(asd$rho.sky) ~
-                                             "   "~ rho[Fresnel]^NIR == .(asd$rho.sky.NIR)~
-                                             "   "~ rho[Fresnel]^UV == .(asd$rho.sky.UV)))
+      p1 <- p1 + ggtitle(paste(asd$anc$StationID, asd$DateTime, "Lat:", signif(asd$anc$lat,5), "Lon:", signif(asd$anc$lon,5)),
+                         subtitle = bquote(rho[Fresnel]^Mobley == .(signif(asd$rho.sky,3)) ~
+                                             "   "~ rho[Fresnel]^NIR == .(signif(asd$rho.sky.NIR,3))~
+                                             "   "~ rho[Fresnel]^UV == .(signif(asd$rho.sky.UV,3))))
       print(p1)
       dev.off()
     } else {
       p1 <- ggplot(data=Dfm, aes(x=wavelength, y=value, colour=rho_w)) + geom_line()
       p1 <- p1 + scale_x_continuous(limits = c(350, 950))
       p1 <- p1 + labs(x=expression(lambda), y=expression(paste(rho[w])), colour="Correction method")
-      p1 <- p1 + ggtitle(paste(asd$anc$StationID, asd$DateTime, "Lat:", asd$anc$lat, "Lon:", asd$anc$lon),
-                         subtitle = bquote(rho[Fresnel]^Mobley2015 == .(asd$rho.sky) ~
-                                             "   "~ rho[Fresnel]^NIR == .(asd$rho.sky.NIR)~
-                                             "   "~ rho[Fresnel]^UV == .(asd$rho.sky.UV)))
+      p1 <- p1 + ggtitle(paste(asd$anc$StationID, asd$DateTime, "Lat:", signif(asd$anc$lat,5), "Lon:", signif(asd$anc$lon,5)),
+                         subtitle = bquote(rho[Fresnel]^Mobley ==  .(signif(asd$rho.sky,3)) ~
+                                             "   "~ rho[Fresnel]^NIR == .(signif(asd$rho.sky.NIR,3))~
+                                             "   "~ rho[Fresnel]^UV == .(signif(asd$rho.sky.UV,3))))
       print(p1)
     }
   }
