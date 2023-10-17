@@ -41,6 +41,8 @@ generate.ASD.rhow.DB <- function(path="./",mission="XXX", wave.range=c(350,900))
     ID = rep("ID", ncasts)
     date = rep(NA, ncasts)
     sunzen = rep(NA, ncasts)
+    viewzen = rep(NA, ncasts)
+    dphi = rep(NA, ncasts)
     lat = rep(NA, ncasts)
     lon = rep(NA, ncasts)
     windspeed = rep(NA, ncasts)
@@ -71,10 +73,23 @@ generate.ASD.rhow.DB <- function(path="./",mission="XXX", wave.range=c(350,900))
         if (rhow.Method[cast] == 8) rhow.m[cast,] <- rhow$rhow.Kutser[ix.min:ix.max]
         if (rhow.Method[cast] == 9) rhow.m[cast,] <- rhow$rhow.Jiang[ix.min:ix.max]
         if (rhow.Method[cast] == 999) rhow.m[cast,] <- rep(NA,nwaves)
+        
+        if (rhow.Method[cast] == 0) rhow.Method[cast] <- "No correction"
+        if (rhow.Method[cast] == 1) rhow.Method[cast] <- "NULL"
+        if (rhow.Method[cast] == 2) rhow.Method[cast] <- "Ruddick.720.780"
+        if (rhow.Method[cast] == 3) rhow.Method[cast] <- "Ruddick.780.870"
+        if (rhow.Method[cast] == 4) rhow.Method[cast] <- "rho.NIR"
+        if (rhow.Method[cast] == 5) rhow.Method[cast] <- "rho.UV"
+        if (rhow.Method[cast] == 6) rhow.Method[cast] <- "rho.UV.NIR"
+        if (rhow.Method[cast] == 7) rhow.Method[cast] <- "COPS.fit"
+        if (rhow.Method[cast] == 8) rhow.Method[cast] <- "Kutser13"
+        if (rhow.Method[cast] == 9) rhow.Method[cast] <- "Jiang20"
 
         ID[cast] <- as.character(cast.info$ID[j])
         date[cast] <- rhow$DateTime
         sunzen[cast] <- rhow$anc$ThetaS
+        viewzen[cast]<- rhow$anc$ThetaV
+        dphi[cast]<- rhow$anc$Dphi
         lat[cast] <- rhow$anc$lat
         lon[cast] <- rhow$anc$lon
         windspeed[cast] <- rhow$anc$Windspeed
@@ -85,6 +100,8 @@ generate.ASD.rhow.DB <- function(path="./",mission="XXX", wave.range=c(350,900))
                               lat[cast],
                               lon[cast],
                               sunzen[cast],
+                              viewzen[cast],
+                              dphi[cast],
                               windspeed[cast],
                               rhow.Method[cast])
 
@@ -94,11 +111,11 @@ generate.ASD.rhow.DB <- function(path="./",mission="XXX", wave.range=c(350,900))
 
           col.names = c(paste("rhow_", waves,sep=""))
 
-          names(all) <- c("StationID","DateTime",  "latitude", "longitude", "sunzen", "WindSpeed", "rhow.Method", col.names)
+          names(all) <- c("StationID","DateTime",  "latitude", "longitude", "sunzen", "viewzen", "dphi",  "WindSpeed", "rhow.Method", col.names)
         } else
         {
           rec = data.frame(rec.info,t(rhow.m[cast,]))
-          names(rec) <-  c("StationID","DateTime",  "latitude", "longitude", "sunzen", "WindSpeed", "rhow.Method", col.names)
+          names(rec) <-  c("StationID","DateTime",  "latitude", "longitude", "sunzen",  "viewzen", "dphi", "WindSpeed", "rhow.Method", col.names)
           all = rbind(all,rec)
         }
 
@@ -118,14 +135,16 @@ generate.ASD.rhow.DB <- function(path="./",mission="XXX", wave.range=c(350,900))
                    lat=lat,
                    lon=lon,
                    sunzen=sunzen,
+                   viewzen=viewzen,
+                   dphi=dphi,
                    windspeed=windspeed,
                    rhow.Method=rhow.Method)
 
     # Save the data
     setwd(path)
-    save(ASD.BD, file=paste("ASD.DB.PackageVersion.",packageVersion("asd"),".", mission,".RDATA",sep=""))
+    save(ASD.BD, file=paste("ASD.DB.PackageVersion.",packageVersion("asdsvc"),".", mission,".RDATA",sep=""))
     all$DateTime=as.POSIXct(all$DateTime, origin="1970-01-01")
-    write.table(all, file = paste("ASD.DB.PackageVersion.",packageVersion("asd"),".", mission,".dat",sep=""), sep=",", quote=F, row.names=F)
+    write.table(all, file = paste("ASD.DB.PackageVersion.",packageVersion("asdsvc"),".", mission,".dat",sep=""), sep=",", quote=F, row.names=F)
 
 
 

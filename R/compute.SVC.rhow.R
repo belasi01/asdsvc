@@ -1,6 +1,5 @@
 #'@title Compute the water leaving reflectance from SVC data
 #'
-#'@description
 #'This function compute the water reflectance (rho_w = pi * Rrs) for a water surface.
 #'The sky glint is removed using various methods as detailed in \code{\link{SVC.go}.
 #'

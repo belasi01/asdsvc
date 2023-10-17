@@ -1,6 +1,6 @@
 #'@title Compute the water leaving reflectance from ASD data
 #'
-#'@description
+#'
 #'This function compute the water reflectance (rho_w = pi * Rrs) for a water surface.
 #'The sky glint is removed using various methods as detailed in \code{\link{ASD.go}.
 #'
@@ -288,7 +288,7 @@ compute.ASD.rhow <- function(raw.asd,
   Kutserdata <- data.frame(UV.NIR.wave, UV.NIR.data)
   names(Kutserdata) <- c("waves", "urhow")
   if (VERBOSE) print("Starting the NLS")
-  glint.fit <- nls(urhow ~ b*waves^z,start = list(b = 1, z = -1),data=Kutserdata)
+  glint.fit <- nls(urhow ~ b*waves^z,start = list(b = 1, z = -1),data=Kutserdata, control = nls.control(warnOnly = T))
 
 
   p <- coef(glint.fit)

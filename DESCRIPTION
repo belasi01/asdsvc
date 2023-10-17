@@ -1,14 +1,14 @@
 Package: asdsvc
 Type: Package
 Title: Analytical Spectral Device (ASD) and Spectra Vista Corporation routines
-Version: 0.3
-Date: 2021-07-25
+Version: 0.3.1
+Date: 2023-10-17
 Author: Simon Belanger
 Maintainer: <simon_belanger@uqar.ca>
 Description: Ensemble de routines pour lire les données ASD et SVC et calculer les
     reflectances spectrales. Comprend les routines pour traiter les surfaces
     terrestres et aquatiques.
 LazyData: TRUE
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Depends: ggplot2, reshape2, grid, oce, stringr, lubridate, data.table
 Roxygen: list(markdown = TRUE)
