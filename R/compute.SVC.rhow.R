@@ -29,6 +29,7 @@ compute.SVC.rhow <- function(raw.SVC,
   
   SVC.path <- getwd()
   waves <- raw.SVC$Ltot$waves
+  nb.waves <- length(waves)
   
   anc <- raw.SVC$anc
   
@@ -52,31 +53,6 @@ compute.SVC.rhow <- function(raw.SVC,
   ix890 = which.min(abs(waves - 890))
   ix900 = which.min(abs(waves - 900))
   
-  
-  # Lt    = Ltot$Lum[,ix.Lt.good]
-  # Li  = Lsky$Lum[,ix.Lsky.good]
-  # Lpanel= Lpanel$Lum[,ix.Lpanel.good]
-  # 
-  # Lt.time.mean = mean.POSIXct(Ltot$DateTime[ix.Lt.good])
-  
-  
-  ######### Average data
-  # Ed.mean = pi*apply(Lpanel, 1, mean)/rho.panel # See eq 5 i Mobley (1999)
-  # Li.mean = apply(Li, 1, mean)
-  # if (ncol(as.matrix(Lt))==1) {
-  #   Lt.mean = Lt
-  # } else {
-  #   Lt.mean = apply(Lt, 1, mean)
-  # }
-  # #Lt.mean = apply(Lt, 1, mean)
-  # 
-  # Ed.sd = pi*apply(Lpanel, 1, sd)/rho.panel
-  # Li.sd = apply(Li, 1, sd)
-  # if (ncol(as.matrix(Lt)) == 1) {
-  #   print("Only one observation, can't calculate standard deviation")
-  # } else {
-  #   Lt.sd = apply(Lt, 1, sd)
-  # }
   Ed = pi*raw.SVC$Ltot$Reference$L/rho.panel 
   
   ######## Compute Sky reflectance and rho and apply a smoothing function
@@ -109,46 +85,110 @@ compute.SVC.rhow <- function(raw.SVC,
   
   ################### remove the reflected sky
   if (VERBOSE) print("Apply NIR corrections")
-  Rrs = sea.smooth - (rho*sky.smooth)
   
-  # Apply a correction
+  #### Compute Rrs by removing sky reflectance to total reflectance.
+  #### 10 methods are implemented
+  nb.methods <- 10
+  methods=c("Mobley+NONE", "Mobley+NULL", "Mobley+SIMILARITY1", "Mobley+SIMILARITY2",
+            "NIR", "UV", "UV+NIR",  "COPS", "Kutser", "Jiang")
+  Rrs <- matrix(NA, nrow=nb.methods, ncol=nb.waves)
+  ##### store the QWIP parameters computed using QWIP.Rrs.R
+  AVW <- rep(NA,nb.methods)
+  NDI <- rep(NA,nb.methods)
+  QWIP <- rep(NA,nb.methods)
+  QWIP.score <- rep(NA,nb.methods)
+  FU <- rep(NA,nb.methods)
+  
+  ##### Method 1. Mobley LUT standard method with no white correction ("NONE")
+  i=1
+  Rrs[i,] <- sea.smooth - (rho*sky.smooth) ### Mobley LUT standard method
+  tmp=QWIP.Rrs(waves, Rrs[i,])
+  AVW[i] <- tmp$AVW
+  NDI[i] <- tmp$NDI
+  QWIP[i] <-tmp$QWIP
+  QWIP.score[i] <- tmp$QWIP.score
+  FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
   
   #####
-  ###### Method 1.  A standard NULL correction
-  
-  offset = Rrs[ix900]
-  Rrs.NULL = Rrs - offset # Apply NIR correction
-  
-  #####
-  ###### Methods 2 and 3. Estimation of the NIR Rrs offset correction based on
+  ###### Method 2.  A standard NULL correction
+  i=2
+  offset = mean(Rrs[1,ix890:ix900],na.rm = T)
+  Rrs[i,] <- Rrs[1,] - offset # Apply NIR correction
+  tmp=QWIP.Rrs(waves, Rrs[i,])
+  AVW[i] <- tmp$AVW
+  NDI[i] <- tmp$NDI
+  QWIP[i] <-tmp$QWIP
+  QWIP.score[i] <- tmp$QWIP.score
+  FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
+
+  ###### Methods 3 & 4. Estimation of the NIR Rrs offset correction based on
   #      Ruddick et al L&O 2006, SPIE 2005
-  offset = 2.35*Rrs[ix780] - Rrs[ix720]/(2.35-1)
+  i=3
+  offset.simil1 = 2.35*Rrs[1,ix780] - Rrs[1,ix720]/(2.35-1)
+  Rrs[i,] <- Rrs[1,] - offset.simil1 # Apply NIR correction
+  tmp=QWIP.Rrs(waves, Rrs[i,])
+  AVW[i] <- tmp$AVW
+  NDI[i] <- tmp$NDI
+  QWIP[i] <-tmp$QWIP
+  QWIP.score[i] <- tmp$QWIP.score
+  FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
   Rrs.SIMILARITY1 = Rrs - offset # Apply NIR correction
-  offset = 1.91*Rrs[ix870] - Rrs[ix780]/(1.91-1)
-  Rrs.SIMILARITY2 = Rrs - offset # Apply NIR correction
+  
+  
+  i=4
+  offset.simil2 = 1.91*Rrs[1,ix870] - Rrs[1,ix780]/(1.91-1)
+  Rrs[i,] <- Rrs[1,] - offset.simil2 # Apply NIR correction
+  tmp=QWIP.Rrs(waves, Rrs[i,])
+  AVW[i] <- tmp$AVW
+  NDI[i] <- tmp$NDI
+  QWIP[i] <-tmp$QWIP
+  QWIP.score[i] <- tmp$QWIP.score
+  FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
+  Rrs.SIMILARITY1 = Rrs - offset # Apply NIR correction
   
   #####
-  ###### Method 4. Estimation of the rho.fresnel assuming BLACK Pixel assumption in the NIR
+  ###### Method 5. Estimation of the rho.fresnel assuming BLACK Pixel assumption in the NIR
+  i=5
   rho.sky.NIR =  (mean(sea.smooth[ix890:ix900], na.rm = T) /
                     mean(sky.smooth[ix890:ix900], na.rm = T))
-  Rrs.BP = sea.smooth - (rho.sky.NIR*sky.smooth)
+  Rrs[i,] <-  sea.smooth - (rho.sky.NIR*sky.smooth)
+  tmp=QWIP.Rrs(waves, Rrs[i,])
+  AVW[i] <- tmp$AVW
+  NDI[i] <- tmp$NDI
+  QWIP[i] <-tmp$QWIP
+  QWIP.score[i] <- tmp$QWIP.score
+  FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
   
   #####
-  ###### Method 5. Estimation of the rho.fresnel assuming BLACK Pixel assumption in the UV
+  ###### Method 6. Estimation of the rho.fresnel assuming BLACK Pixel assumption in the UV
+  i=6
   rho.sky.UV =  (mean(sea.smooth[ix350:ix380], na.rm = T) /
                    mean(sky.smooth[ix350:ix380], na.rm = T))
-  Rrs.UV = sea.smooth - (rho.sky.UV*sky.smooth)
+  Rrs[i,] <-  sea.smooth - (rho.sky.UV*sky.smooth)
+  tmp=QWIP.Rrs(waves, Rrs[i,])
+  AVW[i] <- tmp$AVW
+  NDI[i] <- tmp$NDI
+  QWIP[i] <-tmp$QWIP
+  QWIP.score[i] <- tmp$QWIP.score
+  FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
   
   #####
-  ###### Method 6. Estimation of the rho.fresnel assuming BLACK Pixel assumption in both UV and NIR (spectrally dependent)
+  ###### Method 7. Estimation of the rho.fresnel assuming BLACK Pixel assumption in both UV and NIR (spectrally dependent)
+  i=7
   rho.sky.UV.NIR = spline(c(mean(waves[ix350:ix380], na.rm = T),
                             mean(waves[ix890:ix900], na.rm = T)),
                           c(rho.sky.UV, rho.sky.NIR),
                           xout = waves)$y
-  Rrs.UV.NIR = sea.smooth - (rho.sky.UV.NIR*sky.smooth)
+  Rrs[i,] <-  sea.smooth - (rho.sky.UV.NIR*sky.smooth)
+  tmp=QWIP.Rrs(waves, Rrs[i,])
+  AVW[i] <- tmp$AVW
+  NDI[i] <- tmp$NDI
+  QWIP[i] <-tmp$QWIP
+  QWIP.score[i] <- tmp$QWIP.score
+  FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
   
   #####
-  ###### Method 7. (OPTIONAL). Only if COPS is available
+  ###### Method 8. (OPTIONAL). Only if COPS is available
   # this method forces the SVC-derived Rrs to pass through
   # the cops Rrs at two wavelenghts (second shortest and longest respectively)
   Rrs.COPS = NA
@@ -248,7 +288,16 @@ compute.SVC.rhow <- function(raw.SVC,
       rho.sky.COPS = spline(c(waves.min, waves.max), c(rho.sky.min, rho.sky.max),
                             xout = waves)$y
       
-      Rrs.COPS = sea.smooth - (rho.sky.COPS*sky.smooth)
+      #Rrs.COPS = sea.smooth - (rho.sky.COPS*sky.smooth)
+      
+      i=8
+      Rrs[i,] <- sea.smooth - (rho.sky.COPS*sky.smooth)
+      tmp=QWIP.Rrs(waves, Rrs[i,])
+      AVW[i] <- tmp$AVW
+      NDI[i] <- tmp$NDI
+      QWIP[i] <-tmp$QWIP
+      QWIP.score[i] <- tmp$QWIP.score
+      FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
       
       setwd(SVC.path)
       
@@ -261,7 +310,7 @@ compute.SVC.rhow <- function(raw.SVC,
   }
   
   #####
-  ##### Method 8: Implementation of Kutser et al. 2013 for removal of sky glint
+  ##### Method 9: Implementation of Kutser et al. 2013 for removal of sky glint
   if (VERBOSE) print("Begining the Kutser correction for glint")
   UVdata <- sea.smooth[ix350:ix380]
   NIRdata <- sea.smooth[ix890:ix900]
@@ -276,27 +325,29 @@ compute.SVC.rhow <- function(raw.SVC,
   names(Kutserdata) <- c("waves", "urhow")
   if (VERBOSE) print("Starting the NLS")
   
-  try(glint.fit <- nls(urhow ~ b*waves^z,start = list(b = 1, z = 0),data=Kutserdata))
+  try(glint.fit <- nls(urhow ~ b*waves^z,start = list(b = 1, z = -1),data=Kutserdata,
+                       control = nls.control(maxiter = 300)))
+  
   
   if (exists("glint.fit")) {
     p <- coef(glint.fit)
     Kutserestimate <- p[1]*(waves)^p[2]
-    Rrs.Kutser <- sea.smooth - Kutserestimate
+    i=9
+    Rrs[i,]  <- sea.smooth - Kutserestimate
+    tmp=QWIP.Rrs(waves, Rrs[i,])
+    AVW[i] <- tmp$AVW
+    NDI[i] <- tmp$NDI
+    QWIP[i] <-tmp$QWIP
+    QWIP.score[i] <- tmp$QWIP.score
+    FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
     if (VERBOSE) print("Kutser correction finished")
-    # TO BE REMOVED EVENTUALLY
-    #plot(Kutserdata$waves, Kutserdata$urhow)
-    #summary(glint.fit)
-    #plot(sea.smooth)
-    #lines(Kutserestimate)
   } else {
     print("******** NLS fit failed for Kutser method")
-    Rrs.Kutser <- NA
+    #Rrs.Kutser <- NA
   }
   
-  
-  
   #####
-  # Method 9: from Jiang et al 2020 (https://doi.org/10.1016/j.isprsjprs.2020.05.003)
+  # Method 10: from Jiang et al 2020 (https://doi.org/10.1016/j.isprsjprs.2020.05.003)
   #####
   Rrs.M99 = sea.smooth - (0.028*sky.smooth)
   md_750_780<-median(as.numeric(Rrs.M99[ix750:ix780]))
@@ -311,21 +362,35 @@ compute.SVC.rhow <- function(raw.SVC,
   }else{
     delta<-md_750_780
   }
-  Rrs.Jiang <- Rrs.M99-delta
+  
+  i=10
+  Rrs[i,] <-  Rrs.M99-delta 
+  tmp=QWIP.Rrs(waves, Rrs[i,])
+  AVW[i] <- tmp$AVW
+  NDI[i] <- tmp$NDI
+  QWIP[i] <-tmp$QWIP
+  QWIP.score[i] <- tmp$QWIP.score
+  FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
   
   #####
   list.rho = list(
     waves = waves,
+    methods = methods,
+    Rrs = Rrs,
+    rhow = pi*Rrs,
+    rho.sky = rho,
+    rho.sky.NIR = rho.sky.NIR,
+    rho.sky.UV = rho.sky.UV,
+    rho.sky.UV.NIR = rho.sky.UV.NIR,
+    offset = offset,
+    offset.simi1 = offset.simil1,
+    offset.simi2 = offset.simil2,
+    AVW = AVW,
+    NDI = NDI,
+    QWIP = QWIP,
+    QWIP.score = QWIP.score,
+    FU = FU,
     rhow = Rrs*pi,
-    rhow.NULL = Rrs.NULL*pi,
-    rhow.SIMILARITY1 = Rrs.SIMILARITY1*pi,
-    rhow.SIMILARITY2 = Rrs.SIMILARITY2*pi,
-    rhow.NIR = Rrs.BP * pi,
-    rhow.UV = Rrs.UV * pi,
-    rhow.UV.NIR = Rrs.UV.NIR * pi,
-    rhow.COPS = Rrs.COPS * pi,
-    rhow.Kutser = Rrs.Kutser * pi,
-    rhow.Jiang = Rrs.Jiang * pi,
     rho.sky = rho,
     rho.sky.NIR = rho.sky.NIR,
     rho.sky.UV = rho.sky.UV,

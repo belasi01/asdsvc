@@ -1,4 +1,4 @@
-#' Generate a data base for rhow from the ASD
+#' Generate a data base for rhow (pi*Rrs) from the ASD
 #'
 #'
 #' @param path is the path where the file directories.for.ASD.dat containing the data folders
@@ -12,6 +12,8 @@
 #'
 #' The object ASD.DB is saved in RData format. The data are also saved in ASCII (.dat with comma separator)
 #' and a figure showing the measured rho_w spectra of the data base is produced.
+#' 
+#' @author Simon Bélanger
 
 generate.ASD.rhow.DB <- function(path="./",mission="XXX", wave.range=c(350,900)) {
 
@@ -56,35 +58,14 @@ generate.ASD.rhow.DB <- function(path="./",mission="XXX", wave.range=c(350,900))
         file.name = paste("./RData/", cast.info$ID[j], ".ASD.rhow.RData", sep="")
         load(file.name)
 
-        # find the indices corresponding to the wavelenght range to output
+        # find the indices corresponding to the wavelength range to output
         ix.min <- which(rhow$waves == wave.range[1])
         ix.max <- which(rhow$waves == wave.range[2])
 
         rhow.Method[cast] <- cast.info$rhow.Method[j] # retrieve the method from the cast.info file
-
-        if (rhow.Method[cast] == 0) rhow.m[cast,] <- rhow$rhow[ix.min:ix.max]
-        if (rhow.Method[cast] == 1) rhow.m[cast,] <- rhow$rhow.NULL[ix.min:ix.max]
-        if (rhow.Method[cast] == 2) rhow.m[cast,] <- rhow$rhow.SIMILARITY1[ix.min:ix.max]
-        if (rhow.Method[cast] == 3) rhow.m[cast,] <- rhow$rhow.SIMILARITY2[ix.min:ix.max]
-        if (rhow.Method[cast] == 4) rhow.m[cast,] <- rhow$rhow.NIR[ix.min:ix.max]
-        if (rhow.Method[cast] == 5) rhow.m[cast,] <- rhow$rhow.UV[ix.min:ix.max]
-        if (rhow.Method[cast] == 6) rhow.m[cast,] <- rhow$rhow.UV.NIR[ix.min:ix.max]
-        if (rhow.Method[cast] == 7) rhow.m[cast,] <- rhow$rhow.COPS[ix.min:ix.max]
-        if (rhow.Method[cast] == 8) rhow.m[cast,] <- rhow$rhow.Kutser[ix.min:ix.max]
-        if (rhow.Method[cast] == 9) rhow.m[cast,] <- rhow$rhow.Jiang[ix.min:ix.max]
-        if (rhow.Method[cast] == 999) rhow.m[cast,] <- rep(NA,nwaves)
         
-        if (rhow.Method[cast] == 0) rhow.Method[cast] <- "No correction"
-        if (rhow.Method[cast] == 1) rhow.Method[cast] <- "NULL"
-        if (rhow.Method[cast] == 2) rhow.Method[cast] <- "Ruddick.720.780"
-        if (rhow.Method[cast] == 3) rhow.Method[cast] <- "Ruddick.780.870"
-        if (rhow.Method[cast] == 4) rhow.Method[cast] <- "rho.NIR"
-        if (rhow.Method[cast] == 5) rhow.Method[cast] <- "rho.UV"
-        if (rhow.Method[cast] == 6) rhow.Method[cast] <- "rho.UV.NIR"
-        if (rhow.Method[cast] == 7) rhow.Method[cast] <- "COPS.fit"
-        if (rhow.Method[cast] == 8) rhow.Method[cast] <- "Kutser13"
-        if (rhow.Method[cast] == 9) rhow.Method[cast] <- "Jiang20"
-
+        ix.method <- which(toupper(rhow$methods) == toupper(cast.info$rhow.Method[j]))
+        rhow.m[cast,] <- rhow$rhow[ix.method,ix.min:ix.max]
         ID[cast] <- as.character(cast.info$ID[j])
         date[cast] <- rhow$DateTime
         sunzen[cast] <- rhow$anc$ThetaS
@@ -130,6 +111,7 @@ generate.ASD.rhow.DB <- function(path="./",mission="XXX", wave.range=c(350,900))
     }
 
     ASD.BD <- list(ID=ID,
+                   waves=waves,
                    rhow.m=rhow.m,
                    date=as.POSIXct(date, origin="1970-01-01"),
                    lat=lat,
@@ -146,11 +128,9 @@ generate.ASD.rhow.DB <- function(path="./",mission="XXX", wave.range=c(350,900))
     all$DateTime=as.POSIXct(all$DateTime, origin="1970-01-01")
     write.table(all, file = paste("ASD.DB.PackageVersion.",packageVersion("asdsvc"),".", mission,".dat",sep=""), sep=",", quote=F, row.names=F)
 
-
-
     # plot the data
 
-    png(paste("ASD.DB.", mission,".png",sep=""), res=300, height = 6, width = 8, units = "in")
+    png(paste("ASD.DB.PackageVersion.",packageVersion("asdsvc"),".",  mission,".png",sep=""), res=300, height = 6, width = 8, units = "in")
 
     Df = as.data.frame(cbind(wavelength=waves, t(rhow.m)))
     colnames(Df) <- c("wavelength", ID)
