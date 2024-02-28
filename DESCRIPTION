@@ -1,8 +1,8 @@
 Package: asdsvc
 Type: Package
 Title: Analytical Spectral Device (ASD) and Spectra Vista Corporation routines
-Version: 0.4-1
-Date: 2024-02-27
+Version: 0.4-2
+Date: 2024-02-28
 Author: Simon Belanger
 Maintainer: <simon_belanger@uqar.ca>
 Description: Ensemble de routines pour lire les données ASD et SVC et calculer les
