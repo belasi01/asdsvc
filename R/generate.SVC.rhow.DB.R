@@ -65,50 +65,59 @@ generate.SVC.rhow.DB <- function(path="./",mission="XXX", wave.range=c(350,900))
     cast.info <- read.table(file="cast.info.SVC.dat", header=T, comment.char = "#")
     nexperiments <- nrow(cast.info)
     for (j in 1:nexperiments) {
-      file.name = paste("./RData/", cast.info$ID[j],"_",cast.info$Replicate[j], ".SVC.rhow.RData", sep="")
-      load(file.name)
       
-      rhow.Method[cast] <- cast.info$rhow.Method[j] # retrieve the method from the cast.info file
-      
-      ix.method <- which(toupper(rhow$methods) == toupper(cast.info$rhow.Method[j]))
-      rhow.m[cast,] <- rhow$rhow[ix.method,ix.min:ix.max]
-      ID[cast] <- as.character(cast.info$ID[j])
-      Replicate[cast] <- as.character(cast.info$Replicate[j])
-      date[cast] <- rhow$DateTime
-      sunzen[cast] <- rhow$anc$ThetaS
-      viewzen[cast]<- rhow$anc$ThetaV
-      dphi[cast]<- rhow$anc$Dphi
-      lat[cast] <- rhow$anc$lat
-      lon[cast] <- rhow$anc$lon
-      windspeed[cast] <- rhow$anc$Windspeed
-      
-      
-      rec.info = data.frame(ID[cast],
-                            date[cast],
-                            lat[cast],
-                            lon[cast],
-                            sunzen[cast],
-                            viewzen[cast],
-                            dphi[cast],
-                            windspeed[cast],
-                            rhow.Method[cast])
-      
-      
-      if (cast == 1) {
-        all = data.frame(rec.info,t(rhow.m[cast,]))
+      # check for good casts
+      if (cast.info$rhow.Method[j] == "999") {
+        print("Cast identified as bad data")
+        print(cast.info[j,])
+        cast = cast + 1
+      } else {
+        file.name = paste("./RData/", cast.info$ID[j],"_",cast.info$Replicate[j], ".SVC.rhow.RData", sep="")
+        load(file.name)
         
-        col.names = c(paste("rhow_", waves,sep=""))
+        rhow.Method[cast] <- cast.info$rhow.Method[j] # retrieve the method from the cast.info file
         
-        names(all) <- c("StationID","DateTime",  "latitude", "longitude", "sunzen", "viewzen", "dphi",  "WindSpeed", "rhow.Method", col.names)
-      } else
-      {
-        rec = data.frame(rec.info,t(rhow.m[cast,]))
-        names(rec) <-  c("StationID","DateTime",  "latitude", "longitude", "sunzen",  "viewzen", "dphi", "WindSpeed", "rhow.Method", col.names)
-        all = rbind(all,rec)
-      }
-      
-      
-      cast = cast + 1
+        ix.method <- which(toupper(rhow$methods) == toupper(cast.info$rhow.Method[j]))
+        rhow.m[cast,] <- rhow$rhow[ix.method,ix.min:ix.max]
+        ID[cast] <- as.character(cast.info$ID[j])
+        Replicate[cast] <- as.character(cast.info$Replicate[j])
+        date[cast] <- rhow$DateTime
+        sunzen[cast] <- rhow$anc$ThetaS
+        viewzen[cast]<- rhow$anc$ThetaV
+        dphi[cast]<- rhow$anc$Dphi
+        lat[cast] <- rhow$anc$lat
+        lon[cast] <- rhow$anc$lon
+        windspeed[cast] <- rhow$anc$Windspeed
+        
+        
+        rec.info = data.frame(ID[cast],
+                              date[cast],
+                              lat[cast],
+                              lon[cast],
+                              sunzen[cast],
+                              viewzen[cast],
+                              dphi[cast],
+                              windspeed[cast],
+                              rhow.Method[cast])
+        
+        
+        if (cast == 1) {
+          all = data.frame(rec.info,t(rhow.m[cast,]))
+          
+          col.names = c(paste("rhow_", waves,sep=""))
+          
+          names(all) <- c("StationID","DateTime",  "latitude", "longitude", "sunzen", "viewzen", "dphi",  "WindSpeed", "rhow.Method", col.names)
+        } else
+        {
+          rec = data.frame(rec.info,t(rhow.m[cast,]))
+          names(rec) <-  c("StationID","DateTime",  "latitude", "longitude", "sunzen",  "viewzen", "dphi", "WindSpeed", "rhow.Method", col.names)
+          all = rbind(all,rec)
+        }
+        
+        
+        cast = cast + 1
+      } 
+
       
       
       

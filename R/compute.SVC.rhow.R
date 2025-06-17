@@ -124,7 +124,7 @@ compute.SVC.rhow <- function(raw.SVC,
   ###### Methods 3 & 4. Estimation of the NIR Rrs offset correction based on
   #      Ruddick et al L&O 2006, SPIE 2005
   i=3
-  offset.simil1 = 2.35*Rrs[1,ix780] - Rrs[1,ix720]/(2.35-1)
+  offset.simil1 = (2.35*Rrs[1,ix780] - Rrs[1,ix720])/(2.35-1)
   Rrs[i,] <- Rrs[1,] - offset.simil1 # Apply NIR correction
   tmp=QWIP.Rrs(waves, Rrs[i,])
   AVW[i] <- tmp$AVW
@@ -132,11 +132,10 @@ compute.SVC.rhow <- function(raw.SVC,
   QWIP[i] <-tmp$QWIP
   QWIP.score[i] <- tmp$QWIP.score
   FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
-  Rrs.SIMILARITY1 = Rrs - offset # Apply NIR correction
   
   
   i=4
-  offset.simil2 = 1.91*Rrs[1,ix870] - Rrs[1,ix780]/(1.91-1)
+  offset.simil2 = (1.91*Rrs[1,ix870] - Rrs[1,ix780])/(1.91-1)
   Rrs[i,] <- Rrs[1,] - offset.simil2 # Apply NIR correction
   tmp=QWIP.Rrs(waves, Rrs[i,])
   AVW[i] <- tmp$AVW
@@ -144,7 +143,6 @@ compute.SVC.rhow <- function(raw.SVC,
   QWIP[i] <-tmp$QWIP
   QWIP.score[i] <- tmp$QWIP.score
   FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
-  Rrs.SIMILARITY1 = Rrs - offset # Apply NIR correction
   
   #####
   ###### Method 5. Estimation of the rho.fresnel assuming BLACK Pixel assumption in the NIR

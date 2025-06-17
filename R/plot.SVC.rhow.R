@@ -81,9 +81,15 @@ plot.SVC.rhow <- function (SVC, PNG=FALSE, RADIANCES=FALSE) {
     } else methods <-   SVC$methods
 
     
-    Dfm = melt(Df, id.vars = c("wavelength"))
-    names(Dfm) = c("wavelength", "Methods", "value" )
+  #  Dfm = melt(Df, id.vars = c("wavelength"))
+  #  names(Dfm) = c("wavelength", "Methods", "value" )
     
+    Dfm <- Df %>%
+      pivot_longer(
+        cols = -wavelength,  # Keep wavelength as is
+        names_to = "Methods",
+        values_to = "value"
+      )
       
       # Define meaningful colors for the points and match them to the levels of the Methods variable
       method_colors <- viridis(ncol(Df)-1)
@@ -96,9 +102,12 @@ plot.SVC.rhow <- function (SVC, PNG=FALSE, RADIANCES=FALSE) {
                            values = method_colors,
                            labels = methods) +
         ggtitle(paste( "Lat:", signif(SVC$anc$lat,5), "Lon:", signif(SVC$anc$lon,6)),
-                subtitle = bquote(rho[Fresnel]^Mobley2015 == .(signif(SVC$rho.sky,3)) ~
+                subtitle = bquote(rho[Fresnel]^Mobley1999 == .(signif(SVC$rho.sky,3)) ~
                                     "   "~ rho[Fresnel]^NIR == .(signif(SVC$rho.sky.NIR, 3))~
                                     "   "~ rho[Fresnel]^UV == .(signif(SVC$rho.sky.UV, 3))))
+      
+      
+      
       
       
       
@@ -125,9 +134,16 @@ plot.SVC.rhow <- function (SVC, PNG=FALSE, RADIANCES=FALSE) {
                        NDI.plus.0.2 = predicted.NDI+0.2)
       
       # Reshaping
-      dfm <- melt(df,id.vars = "AVW")
-      names(dfm) <- c("AVW", "Predicted", "NDI")
+     # dfm <- melt(df,id.vars = "AVW")
+      #names(dfm) <- c("AVW", "Predicted", "NDI")
       
+      # Reshaping using pivot_longer (modern replacement for melt)
+      dfm <- df %>%
+        pivot_longer(
+          cols = -AVW,              # Keep AVW fixed
+          names_to = "Predicted",   # New column for variable names
+          values_to = "NDI"         # New column for values
+        )
       
       # my point data frame
       df.qwip <- data.frame(AVW = SVC$AVW,
