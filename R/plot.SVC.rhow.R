@@ -91,6 +91,9 @@ plot.SVC.rhow <- function (SVC, PNG=FALSE, RADIANCES=FALSE) {
         values_to = "value"
       )
       
+    
+    Dfm$Methods <- factor(Dfm$Methods, levels = methods)
+    
       # Define meaningful colors for the points and match them to the levels of the Methods variable
       method_colors <- viridis(ncol(Df)-1)
       names(method_colors) <- methods
@@ -153,6 +156,8 @@ plot.SVC.rhow <- function (SVC, PNG=FALSE, RADIANCES=FALSE) {
       
       # remove COPS line if all NA
       if (all(is.na(Df$COPS))) df.qwip <- df.qwip[-8,]
+      
+      df.qwip$Methods <- factor(df.qwip$Methods, levels = methods)
       
       
       # Plotting
